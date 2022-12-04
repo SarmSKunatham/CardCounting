@@ -28,8 +28,11 @@ print("Loaded templates")
 
 # Read image
 image = cv2.imread(args["image"])
-IMG_WIDTH = image.shape[1]
-IMG_HEIGHT = image.shape[0]
+IMG_WIDTH = 1280
+# IMG_WIDTH = image.shape[1]
+IMG_HEIGHT = (image.shape[0] // image.shape[1]) * IMG_WIDTH
+image = cv2.resize(image, (IMG_WIDTH, IMG_HEIGHT))
+# image = cv2.resize(image, IMG_SIZE)
 
 cv2.imshow('Original image', image)
 
@@ -65,7 +68,7 @@ if len(cardList) != 0:
         cv2.circle(temp, (cardList[i].center[0], cardList[i].center[1]), 5, (255, 0, 0), -1)
 
 print(f"Total number of cards found: {len(cardList)}")
-print(cardList[0])
+# print(cardList[0])
 cv2.putText(temp, f"Number of cards: {len(cardList)}", (10, 50), font, 1, (0, 200, 200), 1, cv2.LINE_AA)
 cv2.imshow('result', temp)
 cv2.imshow('warped', cardList[0].warp)

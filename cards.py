@@ -24,8 +24,8 @@ SUIT_HEIGHT = 100
 RANK_DIFF_MAX = 2000
 SUIT_DIFF_MAX = 700
 
-CARD_MAX_AREA = 120000
-CARD_MIN_AREA = 20000
+CARD_MAX_AREA = 200000
+CARD_MIN_AREA = 10000
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -201,13 +201,13 @@ def preprocess_card(contour, image):
     Card.bounding_rect = [x, y, w, h]
     Card.width = w
     Card.height = h
-    
+    print(f"Card width: {w}, Card height: {h}")
     # Center point, taking x and y average of the four corners.
     average = np.mean(points, axis=0)
     Card.center = [int(average[0][0]), int(average[0][1])]
 
     # Warp the card by perspective transform
-    Card.warp = four_point_transform(image, points)
+    Card.warp = four_point_transform(image, points, w, h)
 
     # Grab corner of warped card and zoom in
     cardCorner = Card.warp[0: CORNER_HEIGHT, 0: CORNER_WIDTH]
@@ -254,7 +254,7 @@ def preprocess_card(contour, image):
 
     return Card
 
-def order_points(points):
+def order_points(points, w, h):
     '''
     Input:
         - A list of 4 points
@@ -266,15 +266,50 @@ def order_points(points):
     # s = points.sum(axis = 1)
     s = np.sum(points, axis=2)
     print(f"s: {s}")
-    rect[0] = points[np.argmin(s)]
-    rect[2] = points[np.argmax(s)]
+    tl = points[np.argmin(s)]
+    br = points[np.argmax(s)]
     diff = np.diff(points, axis = -1)
-    rect[1] = points[np.argmin(diff)]
-    rect[3] = points[np.argmax(diff)]
+    tr = points[np.argmin(diff)]
+    bl = points[np.argmax(diff)]
+
+    # [top left, top right, bottom right, bottom left]
+    # use width and height to determine the orientation of the card
+    # to find the order of the points
+
+    # If card is vertically oriented
+    if w <= 0.8 * h:
+        rect[0] = tl
+        rect[1] = tr
+        rect[2] = br
+        rect[3] = bl
+    # If card is horizontally oriented
+    if w >= 1.2 * h:
+        rect[0] = bl
+        rect[1] = tl
+        rect[2] = tr
+        rect[3] = br
+    # If card is diamond oriented
+    if w > 0.8 * h and w < 1.2 * h:
+        # If the furthest left point is higher thatn the furthest right point
+        # Card is tileted to the left
+        if points[1][0][1] <= points[3][0][1]:
+            rect[0] = points[1][0]
+            rect[1] = points[0][0]
+            rect[2] = points[3][0]
+            rect[3] = points[2][0]
+        # If the furthest left point is lower thatn the furthest right point
+        # Card is tileted to the right
+        if points[1][0][1] > points[3][0][1]:
+            rect[0] = points[0][0]
+            rect[1] = points[3][0]
+            rect[2] = points[2][0]
+            rect[3] = points[1][0]
+
+
 
     return rect
 
-def four_point_transform(image, points):
+def four_point_transform(image, points, w, h):
     '''
     Input:
         - An image
@@ -284,7 +319,7 @@ def four_point_transform(image, points):
         - A warped image
     '''
     # Sort the points to make sure the order is top-left, top-right, bottom-right, bottom-left
-    rect = order_points(points)
+    rect = order_points(points, w, h)
     # print(np.sum(points, axis=2))
     print(f'rect: {rect}')
     maxWidth = 200
