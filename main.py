@@ -2,6 +2,7 @@ import cards
 import cv2
 import argparse
 import os
+import time
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -16,6 +17,7 @@ if not os.path.exists(args["image"]):
     exit()
 
 # ==============CONSTANTS================
+prev = time.time()
 IMG_WIDTH = 1280
 IMG_HEIGHT = 720
 IMG_SIZE = (IMG_WIDTH, IMG_HEIGHT)
@@ -68,6 +70,7 @@ if len(cardList) != 0:
         cv2.circle(temp, (cardList[i].center[0], cardList[i].center[1]), 5, (255, 0, 0), -1)
 
 print(f"Total number of cards found: {len(cardList)}")
+print(f"Time used : {time.time() - prev}")
 # print(cardList[0])
 cv2.putText(temp, f"Number of cards: {len(cardList)}", (10, 50), font, 1, (0, 200, 200), 1, cv2.LINE_AA)
 cv2.imshow('result', temp)
