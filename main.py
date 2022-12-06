@@ -43,7 +43,7 @@ cv2.imshow('thresholded_image', thresholded_image)
 
 # Find and sort contours of all cards in the image
 sorted_contours, contour_is_card = cards.find_cards(thresholded_image)
-
+cardList = []
 if len(sorted_contours) != 0:
     # Initialize a new list of card objects
     # k indexes the newly made list of cards
